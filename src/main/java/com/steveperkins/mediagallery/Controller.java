@@ -1,4 +1,4 @@
-package sample;
+package com.steveperkins.mediagallery;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -36,7 +36,7 @@ public class Controller implements Initializable {
     public void initialize(final URL location, final ResourceBundle resources) {
         fileOpen.setOnAction(actionEvent -> {
             final FileChooser fileChooser = new FileChooser();
-            final File file = fileChooser.showOpenDialog(Main.getInstance().getStage());
+            final File file = fileChooser.showOpenDialog(null);
             loadImage(file);
         });
         fileExit.setOnAction(actionEvent -> Platform.exit());
