@@ -13,6 +13,9 @@ import javafx.stage.FileChooser;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
@@ -62,8 +65,21 @@ public class Controller implements Initializable {
             content.getChildren().clear();
             content.getChildren().add(imageView);
             status.setText("1 of 1");
+            System.out.printf("There are %d supported images in this directory\n", findSiblingImages(file).size());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
+    }
+
+    private List<File> findSiblingImages(final File file) {
+        final List<File> returnValue = new ArrayList<>(Arrays.asList(file));
+        if (file == null) return returnValue;
+        final File[] imageFiles = file.getParentFile().listFiles(pathname -> {
+            if (pathname.getName().lastIndexOf('.') == -1 || pathname.getName().endsWith(".")) return false;
+            final String ext = pathname.getName().substring(pathname.getName().lastIndexOf('.') + 1).toLowerCase();
+            return !pathname.equals(file) && pathname.isFile() && Arrays.asList("bmp", "gif", "jpg", "png").contains(ext);
+        });
+        returnValue.addAll(Arrays.asList(imageFiles));
+        return returnValue;
     }
 }
