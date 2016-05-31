@@ -8,6 +8,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 
@@ -50,12 +51,17 @@ public class Controller implements Initializable {
         helpAbout.setOnAction(actionEvent -> {
             // TODO: Show about
         });
-        content.addEventHandler(DragEvent.DRAG_ENTERED, event -> {
-            if (event.getDragboard().hasFiles()) {
-
+        content.addEventHandler(DragEvent.DRAG_OVER, event -> {
+            if (event.getDragboard().hasFiles() && GalleryItem.create(event.getDragboard().getFiles().get(0)) != null) {
+                event.acceptTransferModes(TransferMode.LINK);
+            } else {
+                event.consume();
             }
-//            Object content = event.getDragboard().getFiles()
-            System.out.println("DnD");
+        });
+        content.addEventHandler(DragEvent.DRAG_DROPPED, event -> {
+            if (event.getDragboard().hasFiles()) {
+                loadFile(event.getDragboard().getFiles().get(0));
+            }
         });
 
         if (Main.getArgs().length < 1) {
@@ -84,7 +90,7 @@ public class Controller implements Initializable {
         returnValue.addAll(
             Arrays.stream(item.getItem().getParentFile().listFiles())
                 .filter(sibling -> item.getItem().isFile() && !item.getItem().equals(sibling))
-                .map(sibling -> GalleryItem.create(sibling))
+                .map(GalleryItem::create)
                 .collect(Collectors.toList())
         );
         return returnValue;
