@@ -198,6 +198,8 @@ public class Controller implements Initializable {
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
+        } else if (item.isVideo()) {
+            // TODO: Add support for video files
         }
     }
 }

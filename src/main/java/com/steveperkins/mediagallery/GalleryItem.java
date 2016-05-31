@@ -39,6 +39,7 @@ public class GalleryItem {
         if (file == null) return null;
         if (file.getName().lastIndexOf('.') == -1 || file.getName().endsWith(".")) return null;
         final String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1).toLowerCase();
+        // TODO: Add support for video files
         return file.isFile() && Arrays.asList("bmp", "gif", "jpg", "png").contains(ext)
                 ? new GalleryItem(file, Type.IMAGE)
                 : null;
