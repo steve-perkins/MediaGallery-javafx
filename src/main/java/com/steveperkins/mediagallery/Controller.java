@@ -7,6 +7,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.DragEvent;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class Controller implements Initializable {
 
@@ -35,51 +37,77 @@ public class Controller implements Initializable {
     @FXML
     private StackPane content;
 
+    private Gallery gallery;
+
     @Override
     public void initialize(final URL location, final ResourceBundle resources) {
         fileOpen.setOnAction(actionEvent -> {
             final FileChooser fileChooser = new FileChooser();
             final File file = fileChooser.showOpenDialog(null);
-            loadImage(file);
+            loadFile(file);
         });
         fileExit.setOnAction(actionEvent -> Platform.exit());
         helpAbout.setOnAction(actionEvent -> {
             // TODO: Show about
         });
+        content.addEventHandler(DragEvent.DRAG_ENTERED, event -> {
+            if (event.getDragboard().hasFiles()) {
+
+            }
+//            Object content = event.getDragboard().getFiles()
+            System.out.println("DnD");
+        });
 
         if (Main.getArgs().length < 1) {
             status.setText("No file selected");
         } else {
-            loadImage(new File(Main.getArgs()[0]));
+            loadFile(new File(Main.getArgs()[0]));
         }
     }
 
-    private void loadImage(final File file) {
-        if (file == null) return;
-        try {
-            final String imageURL = file.toURI().toURL().toExternalForm();
-            final ImageView imageView = new ImageView(new Image(imageURL));
-            imageView.setPreserveRatio(true);
-            imageView.fitWidthProperty().bind(content.widthProperty());
-            imageView.fitHeightProperty().bind(content.heightProperty());
-            content.getChildren().clear();
-            content.getChildren().add(imageView);
-            status.setText("1 of 1");
-            System.out.printf("There are %d supported images in this directory\n", findSiblingImages(file).size());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+    private void loadFile(final File file) {
+        final GalleryItem item = GalleryItem.create(file);
+        if (item == null) return;
+
+        if (gallery == null) {
+            gallery = new Gallery(item);
+        } else {
+            gallery.add(item);
         }
+        gallery.addAll(findSiblingItems(item));
+        renderNext();
     }
 
-    private List<File> findSiblingImages(final File file) {
-        final List<File> returnValue = new ArrayList<>(Arrays.asList(file));
-        if (file == null) return returnValue;
-        final File[] imageFiles = file.getParentFile().listFiles(pathname -> {
-            if (pathname.getName().lastIndexOf('.') == -1 || pathname.getName().endsWith(".")) return false;
-            final String ext = pathname.getName().substring(pathname.getName().lastIndexOf('.') + 1).toLowerCase();
-            return !pathname.equals(file) && pathname.isFile() && Arrays.asList("bmp", "gif", "jpg", "png").contains(ext);
-        });
-        returnValue.addAll(Arrays.asList(imageFiles));
+    private List<GalleryItem> findSiblingItems(final GalleryItem item) {
+        final List<GalleryItem> returnValue = new ArrayList<>(Arrays.asList(item));
+        if (item == null) return returnValue;
+        returnValue.addAll(
+            Arrays.stream(item.getItem().getParentFile().listFiles())
+                .filter(sibling -> item.getItem().isFile() && !item.getItem().equals(sibling))
+                .map(sibling -> GalleryItem.create(sibling))
+                .collect(Collectors.toList())
+        );
         return returnValue;
+    }
+
+    private void renderNext() {
+        if (gallery == null) return;
+        final int position = gallery.getCursor() + 1;
+        final GalleryItem item = gallery.next();
+        if (item == null) return;
+        if (item.isImage()) {
+            try {
+                final String imageURL = item.getItem().toURI().toURL().toExternalForm();
+                final ImageView imageView = new ImageView(new Image(imageURL));
+                imageView.setPreserveRatio(true);
+                imageView.fitWidthProperty().bind(content.widthProperty());
+                imageView.fitHeightProperty().bind(content.heightProperty());
+                content.getChildren().clear();
+                content.getChildren().add(imageView);
+                status.setText(position + " of " + gallery.size());
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
