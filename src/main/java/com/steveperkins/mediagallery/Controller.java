@@ -8,6 +8,8 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
@@ -64,10 +66,21 @@ public class Controller implements Initializable {
             }
         });
 
+        Main.setController(this);
         if (Main.getArgs().length < 1) {
             status.setText("No file selected");
         } else {
             loadFile(new File(Main.getArgs()[0]));
+        }
+    }
+
+    void keyPressedEvent(KeyEvent event) {
+        if (gallery != null && gallery.size() > 0) {
+            if (event.getCode().equals(KeyCode.RIGHT) || event.getCode().equals(KeyCode.DOWN)) {
+                renderNext();
+            } else if (event.getCode().equals(KeyCode.LEFT) || event.getCode().equals(KeyCode.UP)) {
+                renderPrevious();
+            }
         }
     }
 
@@ -81,7 +94,7 @@ public class Controller implements Initializable {
             gallery.add(item);
         }
         gallery.addAll(findSiblingItems(item));
-        renderNext();
+        render(item, 1);
     }
 
     private List<GalleryItem> findSiblingItems(final GalleryItem item) {
@@ -98,8 +111,19 @@ public class Controller implements Initializable {
 
     private void renderNext() {
         if (gallery == null) return;
-        final int position = gallery.getCursor() + 1;
         final GalleryItem item = gallery.next();
+        final int position = gallery.getCursor() + 1;
+        render(item, position);
+    }
+
+    private void renderPrevious() {
+        if (gallery == null) return;
+        final GalleryItem item = gallery.previous();
+        final int position = gallery.getCursor() + 1;
+        render(item, position);
+    }
+
+    private void render(final GalleryItem item, final int position) {
         if (item == null) return;
         if (item.isImage()) {
             try {

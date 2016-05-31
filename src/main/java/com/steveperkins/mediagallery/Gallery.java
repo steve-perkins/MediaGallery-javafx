@@ -11,18 +11,20 @@ public class Gallery {
 
     public Gallery(final GalleryItem item) {
         this.items = new ArrayList<>();
-        this.items.add(item);
+        if (item != null) this.items.add(item);
         this.cursor = 0;
     }
 
     public Gallery(final Collection<GalleryItem> items) {
         this.items = new ArrayList<>();
-        this.items.addAll(items);
+        for (final GalleryItem item : items) {
+            if (item != null) this.items.add(item);
+        }
         this.cursor = 0;
     }
 
     public void add(final GalleryItem item) {
-        if (!items.contains(item)) {
+        if (item != null && !items.contains(item)) {
             items.add(item);
             if (items.size() == 1) {
                 cursor = 0;
@@ -31,21 +33,19 @@ public class Gallery {
     }
 
     public void addAll(final Collection<GalleryItem> items) {
-        items.stream().forEach(item -> add(item));
+        items.stream().forEach(this::add);
     }
 
     public GalleryItem next() {
         if (items.isEmpty()) return null;
-        final GalleryItem returnValue = items.get(cursor);
         cursor = cursor + 1 < items.size() ? cursor + 1 : 0;
-        return returnValue;
+        return items.get(cursor);
     }
 
     public GalleryItem previous() {
         if (items.isEmpty()) return null;
-        final GalleryItem returnValue = items.get(cursor);
         cursor = cursor > 0 ? cursor - 1 : items.size() - 1;
-        return returnValue;
+        return items.get(cursor);
     }
 
     public int getCursor() {
