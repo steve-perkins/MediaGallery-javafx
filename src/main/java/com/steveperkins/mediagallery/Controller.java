@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
+/**
+ * The JavaFX controller bound to "main.fxml", the main UI window.
+ */
 public class Controller implements Initializable {
 
     @FXML
@@ -42,8 +45,16 @@ public class Controller implements Initializable {
 
     private Gallery gallery;
 
+    /**
+     * Called automatically by JavaFX when creating the UI.  Creates event handlers, and checks for any
+     * initially-selected file (i.e. passed as a command-line parameter or dragged onto the executable icon).
+     *
+     * @param location
+     * @param resources
+     */
     @Override
     public void initialize(final URL location, final ResourceBundle resources) {
+        // Menu bar events
         fileOpen.setOnAction(actionEvent -> {
             final FileChooser fileChooser = new FileChooser();
             final File file = fileChooser.showOpenDialog(null);
@@ -53,6 +64,8 @@ public class Controller implements Initializable {
         helpAbout.setOnAction(actionEvent -> {
             // TODO: Show about
         });
+
+        // Drag-n-drop events
         content.addEventHandler(DragEvent.DRAG_OVER, event -> {
             if (event.getDragboard().hasFiles() && GalleryItem.create(event.getDragboard().getFiles().get(0)) != null) {
                 event.acceptTransferModes(TransferMode.LINK);
@@ -66,6 +79,7 @@ public class Controller implements Initializable {
             }
         });
 
+        // Load the initially-selected file, if there was one
         Main.setController(this);
         if (Main.getArgs().length < 1) {
             status.setText("No file selected");
@@ -74,6 +88,18 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * <p>Processes key events, to scroll through the gallery items when arrow keys are pressed.</p>
+     *
+     * <p> * It doesn't seem possible to register key event handlers for the main window from this controller
+     * class.  So <code>Main</code> has to register the handler, and pass events here via this method.
+     * There could potentially be thread safety issues (i.e. new scrolling operations coming in before
+     * the previous operation finishes rendering), but I'm <i>somewhat</i> sure that the synchronous
+     * nature of this method and the single-threadedness of <code>Main</code> prevents that.  Still,
+     * there's probably a better way to approach this.</p>
+     *
+     * @param event
+     */
     void keyPressedEvent(KeyEvent event) {
         if (gallery != null && gallery.size() > 0) {
             if (event.getCode().equals(KeyCode.RIGHT) || event.getCode().equals(KeyCode.DOWN)) {
@@ -84,6 +110,17 @@ public class Controller implements Initializable {
         }
     }
 
+    /**
+     * <p>Called when a file is explicitly selected by the user (i.e. passed as a command-line parameter,
+     * drag-n-dropped onto the executable icon, drag-n-dropped onto the application window after launch,
+     * or selected from the File->Open menu item.</p>
+     *
+     * <p>Populates the gallery with all supported files in the same directory as the explicitly-selected
+     * file, and renders that explicitly-selected file.  Or else does nothing if the selected file isn't
+     * a supported media item.</p>
+     *
+     * @param file
+     */
     private void loadFile(final File file) {
         final GalleryItem item = GalleryItem.create(file);
         if (item == null) return;
@@ -97,6 +134,17 @@ public class Controller implements Initializable {
         render(item, 1);
     }
 
+    /**
+     * <p>Finds all files in the same directory as the parameter item.  The parameter file will be positioned as
+     * the first element in the resulting list.  If the parameter file is null, then a non-null empty list will
+     * be returned.</p>
+     *
+     * <p>Note that the returned list will contain <code>null</code> elements for the files that are not supported
+     * media items.  The application relies upon the {@link Gallery} methods stripping out <code>null</code>'s.</p>
+     *
+     * @param item
+     * @return
+     */
     private List<GalleryItem> findSiblingItems(final GalleryItem item) {
         final List<GalleryItem> returnValue = new ArrayList<>(Arrays.asList(item));
         if (item == null) return returnValue;
@@ -109,6 +157,9 @@ public class Controller implements Initializable {
         return returnValue;
     }
 
+    /**
+     * Renders the next item in the gallery.
+     */
     private void renderNext() {
         if (gallery == null) return;
         final GalleryItem item = gallery.next();
@@ -116,6 +167,9 @@ public class Controller implements Initializable {
         render(item, position);
     }
 
+    /**
+     * Renders the previous item in the gallery.
+     */
     private void renderPrevious() {
         if (gallery == null) return;
         final GalleryItem item = gallery.previous();
@@ -123,6 +177,12 @@ public class Controller implements Initializable {
         render(item, position);
     }
 
+    /**
+     * Functionality common to {@link Controller#renderNext()} and {@link Controller#renderPrevious()}.
+     *
+     * @param item
+     * @param position
+     */
     private void render(final GalleryItem item, final int position) {
         if (item == null) return;
         if (item.isImage()) {
