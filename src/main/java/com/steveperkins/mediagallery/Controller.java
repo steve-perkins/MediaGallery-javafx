@@ -14,7 +14,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
-import javafx.scene.media.MediaView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -128,7 +127,9 @@ public class Controller implements Initializable {
      * @param file
      */
     private void loadFile(final File file) {
-        gallery.clear();
+        if (gallery != null) {
+            gallery.clear();
+        }
         final GalleryItem item = GalleryItem.create(file);
         if (item == null) return;
 
@@ -194,9 +195,9 @@ public class Controller implements Initializable {
         if (item == null) return;
         stage.setTitle("MediaGallery - " + item.getItem().getName());
         // If the currently rendered item is a video, stop its player before proceeding
-        if (content.getChildren().size() > 0 && content.getChildren().get(0) instanceof MediaView) {
-            final MediaView previousMediaView = (MediaView) content.getChildren().get(0);
-            previousMediaView.getMediaPlayer().dispose();
+        if (content.getChildren().size() > 0 && content.getChildren().get(0) instanceof MediaControl) {
+            final MediaControl previousMediaControl = (MediaControl) content.getChildren().get(0);
+            previousMediaControl.getMediaPlayer().dispose();
         }
         if (item.isImage()) {
             try {
@@ -216,12 +217,9 @@ public class Controller implements Initializable {
                 final String videoURL = item.getItem().toURI().toURL().toExternalForm();
                 final MediaPlayer mediaPlayer = new MediaPlayer(new Media(videoURL));
                 mediaPlayer.setAutoPlay(true);
-                final MediaView mediaView = new MediaView(mediaPlayer);
-                mediaView.setPreserveRatio(true);
-                mediaView.fitWidthProperty().bind(content.widthProperty());
-                mediaView.fitHeightProperty().bind(content.heightProperty());
+                final MediaControl mediaControl = new MediaControl(mediaPlayer, true);
                 content.getChildren().clear();
-                content.getChildren().add(mediaView);
+                content.getChildren().add(mediaControl);
                 status.setText(position + " of " + gallery.size());
             } catch (MalformedURLException e) {
                 e.printStackTrace();
