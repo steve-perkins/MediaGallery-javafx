@@ -64,6 +64,14 @@ public class Gallery {
     }
 
     /**
+     * Removes all items from the gallery.
+     */
+    public void clear() {
+        items.clear();
+        cursor = 0;
+    }
+
+    /**
      * Moves the cursor state forward and returns the next item in the gallery (or <code>null</code> if the
      * gallery is empty).  When the cursor reaches the end, it is reset back to the beginning.
      *

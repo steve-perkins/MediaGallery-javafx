@@ -2,6 +2,7 @@ package com.steveperkins.mediagallery;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * A wrapper for a supported media file.  Includes a file reference and type identifier (i.e. image or video).
@@ -38,11 +39,17 @@ public class GalleryItem {
     public static GalleryItem create(final File file) {
         if (file == null) return null;
         if (file.getName().lastIndexOf('.') == -1 || file.getName().endsWith(".")) return null;
+
+        final List<String> imageExtensions = Arrays.asList("bmp", "gif", "jpg", "png");
+        final List<String> videoExtensions = Arrays.asList("aif", "aiff", "fxm", "flv", "mp3", "mp4", "m4a", "m4v", "wav");
         final String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1).toLowerCase();
-        // TODO: Add support for video files
-        return file.isFile() && Arrays.asList("bmp", "gif", "jpg", "png").contains(ext)
-                ? new GalleryItem(file, Type.IMAGE)
-                : null;
+        if (file.isFile() && imageExtensions.contains(ext)) {
+            return new GalleryItem(file, Type.IMAGE);
+        } else if (file.isFile() && videoExtensions.contains(ext)) {
+            return new GalleryItem(file, Type.VIDEO);
+        } else {
+            return null;
+        }
     }
 
     public File getItem() {

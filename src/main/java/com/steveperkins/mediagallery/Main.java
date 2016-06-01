@@ -7,16 +7,12 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
-import java.net.URL;
-import java.util.ResourceBundle;
-
 /**
  * The main class and entry point for the JavaFX application.
  */
 public class Main extends Application {
 
     private static String[] args;
-    private static Controller controller;
 
     public static void main(final String[] args) {
         Main.args = args;
@@ -34,36 +30,19 @@ public class Main extends Application {
      * @throws Exception
      */
     @Override
-    public void start(Stage primaryStage) throws Exception{
-        final Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("main.fxml"));
+    public void start(Stage primaryStage) throws Exception {
+        final FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource("main.fxml"));
+        Controller controller = new Controller();
+        controller.setArgs(args);
+        controller.setStage(primaryStage);
+        loader.setController(controller);
+
+        final Parent root = loader.load();
         final Scene scene = new Scene(root);
-        scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-            if (controller != null) controller.keyPressedEvent(event);
-        });
+        scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> controller.keyPressedEvent(event) );
         primaryStage.setScene(scene);
         primaryStage.setTitle("MediaGallery");
         primaryStage.show();
     }
 
-    /**
-     * The arguments originally passed to this application at invocation are stored in a static field, and
-     * make accessible to {@link Controller#initialize(URL, ResourceBundle)} so that it can load any
-     * initially-selected file.
-     *
-     * @return
-     */
-    static String[] getArgs() {
-        return args;
-    }
-
-    /**
-     * {@link Controller#initialize(URL, ResourceBundle)} injects its object instance here via this static
-     * setter, so that the key event handler registered in {@link Main#start(Stage)} can pass key events
-     * to the controller.
-     *
-     * @param controller
-     */
-    static void setController(final Controller controller) {
-        Main.controller = controller;
-    }
 }

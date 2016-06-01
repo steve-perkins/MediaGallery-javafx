@@ -12,7 +12,11 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -43,6 +47,8 @@ public class Controller implements Initializable {
     @FXML
     private StackPane content;
 
+    private String[] args;
+    private Stage stage;
     private Gallery gallery;
 
     /**
@@ -56,6 +62,7 @@ public class Controller implements Initializable {
     public void initialize(final URL location, final ResourceBundle resources) {
         // Menu bar events
         fileOpen.setOnAction(actionEvent -> {
+            // TODO: Limit the selection to only supported file extensions
             final FileChooser fileChooser = new FileChooser();
             final File file = fileChooser.showOpenDialog(null);
             loadFile(file);
@@ -80,18 +87,17 @@ public class Controller implements Initializable {
         });
 
         // Load the initially-selected file, if there was one
-        Main.setController(this);
-        if (Main.getArgs().length < 1) {
+        if (args == null || args.length < 1) {
             status.setText("No file selected");
         } else {
-            loadFile(new File(Main.getArgs()[0]));
+            loadFile(new File(args[0]));
         }
     }
 
     /**
      * <p>Processes key events, to scroll through the gallery items when arrow keys are pressed.</p>
      *
-     * <p> * It doesn't seem possible to register key event handlers for the main window from this controller
+     * <p>It doesn't seem possible to register key event handlers for the main window from this controller
      * class.  So <code>Main</code> has to register the handler, and pass events here via this method.
      * There could potentially be thread safety issues (i.e. new scrolling operations coming in before
      * the previous operation finishes rendering), but I'm <i>somewhat</i> sure that the synchronous
@@ -122,6 +128,7 @@ public class Controller implements Initializable {
      * @param file
      */
     private void loadFile(final File file) {
+        gallery.clear();
         final GalleryItem item = GalleryItem.create(file);
         if (item == null) return;
 
@@ -185,6 +192,12 @@ public class Controller implements Initializable {
      */
     private void render(final GalleryItem item, final int position) {
         if (item == null) return;
+        stage.setTitle("MediaGallery - " + item.getItem().getName());
+        // If the currently rendered item is a video, stop its player before proceeding
+        if (content.getChildren().size() > 0 && content.getChildren().get(0) instanceof MediaView) {
+            final MediaView previousMediaView = (MediaView) content.getChildren().get(0);
+            previousMediaView.getMediaPlayer().dispose();
+        }
         if (item.isImage()) {
             try {
                 final String imageURL = item.getItem().toURI().toURL().toExternalForm();
@@ -199,7 +212,41 @@ public class Controller implements Initializable {
                 e.printStackTrace();
             }
         } else if (item.isVideo()) {
-            // TODO: Add support for video files
+            try {
+                final String videoURL = item.getItem().toURI().toURL().toExternalForm();
+                final MediaPlayer mediaPlayer = new MediaPlayer(new Media(videoURL));
+                mediaPlayer.setAutoPlay(true);
+                final MediaView mediaView = new MediaView(mediaPlayer);
+                mediaView.setPreserveRatio(true);
+                mediaView.fitWidthProperty().bind(content.widthProperty());
+                mediaView.fitHeightProperty().bind(content.heightProperty());
+                content.getChildren().clear();
+                content.getChildren().add(mediaView);
+                status.setText(position + " of " + gallery.size());
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
         }
+    }
+
+    /**
+     * Allows {@link Main#start(Stage)} to inject the primary {@link Stage} for the JavaFX window, so
+     * that this controller can update the title bar when loading media items.
+     *
+     * @param stage
+     */
+    public void setStage(final Stage stage) {
+        this.stage = stage;
+    }
+
+    /**
+     * Allows {@link Main#start(Stage)} to inject the arguments originally passed at application invocation,
+     * so that {@link this#initialize(URL, ResourceBundle)} can determine if a filename to load was passed
+     * at startup.
+     *
+     * @param args
+     */
+    public void setArgs(final String[] args) {
+        this.args = args;
     }
 }
