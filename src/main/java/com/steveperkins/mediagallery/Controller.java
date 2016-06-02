@@ -61,8 +61,15 @@ public class Controller implements Initializable {
     public void initialize(final URL location, final ResourceBundle resources) {
         // Menu bar events
         fileOpen.setOnAction(actionEvent -> {
-            // TODO: Limit the selection to only supported file extensions
             final FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("All supported files",
+                            GalleryItem.allExtensions.stream().map(ext -> "*" + ext).collect(Collectors.toList())),
+                    new FileChooser.ExtensionFilter("Images",
+                            GalleryItem.imageExtensions.stream().map(ext -> "*" + ext).collect(Collectors.toList())),
+                    new FileChooser.ExtensionFilter("Audio/Video",
+                            GalleryItem.videoExtensions.stream().map(ext -> "*" + ext).collect(Collectors.toList()))
+            );
             final File file = fileChooser.showOpenDialog(null);
             loadFile(file);
         });
