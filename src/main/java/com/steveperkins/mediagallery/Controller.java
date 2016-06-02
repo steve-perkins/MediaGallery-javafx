@@ -80,7 +80,7 @@ public class Controller implements Initializable {
         helpAbout.setOnAction(actionEvent -> {
             final Alert dialog = new Alert(
                     Alert.AlertType.NONE,
-                    "MediaGallery\nby Steve Perkins\nhttps://gitlab.com/steve-perkins/MediaGallery-javafx",
+                    "MediaGallery\nby Steve Perkins\n\nhttps://gitlab.com/steve-perkins/MediaGallery-javafx\n\n",
                     ButtonType.CLOSE
             );
             dialog.setTitle("About");

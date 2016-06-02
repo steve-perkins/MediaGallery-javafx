@@ -6,3 +6,15 @@ repositories {
 
 dependencies {
 }
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.steveperkins.mediagallery.Main'
+    }
+}
+
+task javapackager(type: Exec) {
+    dependsOn jar
+    workingDir 'build/libs'
+    commandLine 'cmd', '/c', '"C:\\Program Files\\Java\\jdk1.8.0_66\\bin\\javapackager.exe"', '-deploy', '-native', '-srcfiles', 'MediaGallery-javafx.jar', '-outdir', '.', '-outfile', 'MediaGallery', '-appclass', 'com.steveperkins.mediagallery.Main', '-name', 'MediaGallery'
+}
