@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
@@ -35,16 +36,16 @@ public class Controller implements Initializable {
 
     @FXML
     private MenuItem fileOpen;
-
     @FXML
     private MenuItem fileExit;
-
+    @FXML
+    private CheckMenuItem optionsAutoplay;
+    @FXML
+    private CheckMenuItem optionsLoop;
     @FXML
     private MenuItem helpAbout;
-
     @FXML
     private Label status;
-
     @FXML
     private StackPane content;
 
@@ -232,8 +233,8 @@ public class Controller implements Initializable {
             try {
                 final String videoURL = item.getItem().toURI().toURL().toExternalForm();
                 final MediaPlayer mediaPlayer = new MediaPlayer(new Media(videoURL));
-                mediaPlayer.setAutoPlay(true);
-                final MediaControl mediaControl = new MediaControl(mediaPlayer, true);
+                mediaPlayer.setAutoPlay(optionsAutoplay.isSelected());
+                final MediaControl mediaControl = new MediaControl(mediaPlayer, optionsLoop.isSelected());
                 content.getChildren().clear();
                 content.getChildren().add(mediaControl);
                 status.setText(position + " of " + gallery.size());
