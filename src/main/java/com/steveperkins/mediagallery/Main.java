@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
@@ -39,8 +40,9 @@ public class Main extends Application {
 
         final Parent root = loader.load();
         final Scene scene = new Scene(root);
-        scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> controller.keyPressedEvent(event) );
+        scene.addEventHandler(KeyEvent.KEY_PRESSED, controller::keyPressedEvent);
         primaryStage.setScene(scene);
+        primaryStage.getIcons().add(new Image(getClass().getResource("/icon.png").toString()));
         primaryStage.setTitle("MediaGallery");
         primaryStage.show();
     }

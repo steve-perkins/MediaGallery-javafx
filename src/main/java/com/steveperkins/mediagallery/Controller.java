@@ -3,6 +3,8 @@ package com.steveperkins.mediagallery;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
@@ -75,7 +77,14 @@ public class Controller implements Initializable {
         });
         fileExit.setOnAction(actionEvent -> Platform.exit());
         helpAbout.setOnAction(actionEvent -> {
-            // TODO: Show about
+            final Alert dialog = new Alert(
+                    Alert.AlertType.NONE,
+                    "MediaGallery\nby Steve Perkins\nhttps://gitlab.com/steve-perkins/MediaGallery-javafx",
+                    ButtonType.CLOSE
+            );
+            dialog.setTitle("About");
+            ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().add(new Image(getClass().getResource("/icon.png").toString()));
+            dialog.showAndWait();
         });
 
         // Drag-n-drop events
