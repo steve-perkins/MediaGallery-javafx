@@ -1,3 +1,5 @@
+import org.gradle.internal.os.OperatingSystem;
+
 apply plugin: 'java'
 
 repositories {
@@ -16,5 +18,19 @@ jar {
 task javapackager(type: Exec) {
     dependsOn jar
     workingDir 'build/libs'
-    commandLine 'cmd', '/c', '"C:\\Program Files\\Java\\jdk1.8.0_66\\bin\\javapackager.exe"', '-deploy', '-native', '-srcfiles', 'MediaGallery-javafx.jar', '-outdir', '.', '-outfile', 'MediaGallery', '-appclass', 'com.steveperkins.mediagallery.Main', '-name', 'MediaGallery'
+
+    def command
+    if (OperatingSystem.current().isWindows()) {
+        def javapackager = 'javapackager.exe'
+        def absolutePath = "${System.getenv('JAVA_HOME')}${File.separator}bin${File.separator}javapackager.exe"
+        if (new File(absolutePath).exists()) javapackager = absolutePath
+        command = ['cmd', '/c', javapackager, '-deploy', '-native', '-srcfiles', 'MediaGallery-javafx.jar', '-outdir', '.', '-outfile', 'MediaGallery', '-appclass', 'com.steveperkins.mediagallery.Main', '-name', 'MediaGallery']
+    } else {
+        def javapackager = 'javapackager'
+        def absolutePath = "${System.getenv('JAVA_HOME')}${File.separator}bin${File.separator}javapackager"
+        if (new File(absolutePath).exists()) javapackager = absolutePath
+        command = [javapackager, '-deploy', '-native', '-srcfiles', 'MediaGallery-javafx.jar', '-outdir', '.', '-outfile', 'MediaGallery', '-appclass', 'com.steveperkins.mediagallery.Main', '-name', 'MediaGallery']
+    }
+    println command.join(' ')
+    commandLine command
 }
