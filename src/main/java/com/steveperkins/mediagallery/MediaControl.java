@@ -106,12 +106,12 @@ public class MediaControl extends BorderPane {
         // Play button layout and events
         final Button playButton = new Button();
         playButton.setMinWidth(Control.USE_PREF_SIZE);
-        final Image PlayButtonImage = new Image(MediaControl.class.getResourceAsStream("/playbutton.png"));
-        final Image PauseButtonImage = new Image(MediaControl.class.getResourceAsStream("/pausebutton.png"));
+        final Image PlayButtonImage = new Image(getClass().getResourceAsStream("/playbutton.png"));
+        final Image PauseButtonImage = new Image(getClass().getResourceAsStream("/pausebutton.png"));
         final ImageView imageViewPlay = new ImageView(PlayButtonImage);
         final ImageView imageViewPause = new ImageView(PauseButtonImage);
         playButton.setGraphic(imageViewPlay);
-        playButton.setOnAction((ActionEvent e) -> {
+        playButton.setOnAction(e -> {
             updateValues();
             MediaPlayer.Status status = mediaPlayer.getStatus();
             if (status == MediaPlayer.Status.UNKNOWN || status == MediaPlayer.Status.HALTED) {
@@ -338,7 +338,7 @@ public class MediaControl extends BorderPane {
                 playTime.setText(formatTime(currentTime, duration));
                 timeSlider.setDisable(duration.isUnknown());
                 if (!timeSlider.isDisabled() && duration.greaterThan(Duration.ZERO) && !timeSlider.isValueChanging()) {
-                    timeSlider.setValue(currentTime.divide(duration).toMillis() * 100.0);
+                    timeSlider.setValue(currentTime.divide(duration.toMillis()).toMillis() * 100.0);
                 }
                 if (!volumeSlider.isValueChanging()) {
                     volumeSlider.setValue((int) Math.round(mediaPlayer.getVolume() * 100));

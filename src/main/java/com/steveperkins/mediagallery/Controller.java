@@ -4,10 +4,12 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
@@ -48,21 +50,65 @@ public class Controller implements Initializable {
     private Label status;
     @FXML
     private StackPane content;
+    @FXML
+    private Button beginningButton;
+    @FXML
+    private Button backButton;
+    @FXML
+    private Button forwardButton;
+    @FXML
+    private Button endButton;
+    @FXML
+    private Slider sizeSlider;
 
     private String[] args;
     private Stage stage;
-    private Gallery gallery;
+    private Gallery gallery = new Gallery();
 
     /**
-     * Called automatically by JavaFX when creating the UI.  Creates event handlers, and checks for any
-     * initially-selected file (i.e. passed as a command-line parameter or dragged onto the executable icon).
+     * Called automatically by JavaFX when creating the UI.
      *
      * @param location
      * @param resources
      */
     @Override
     public void initialize(final URL location, final ResourceBundle resources) {
-        // Menu bar events
+        initializeMenuBar();
+        initializeStatusBar();
+        initializeDragAndDrop();
+
+        // Load the initially-selected file, if there was one
+        if (args != null && args.length > 0) {
+            loadFile(new File(args[0]));
+        }
+    }
+
+    /**
+     * <p>Processes key events, to scroll through the gallery items when arrow keys are pressed.</p>
+     *
+     * <p>It doesn't seem possible to register key event handlers for the main window from this controller
+     * class.  So <code>Main</code> has to register the handler, and pass events here via this method.
+     * There could potentially be thread safety issues (i.e. new scrolling operations coming in before
+     * the previous operation finishes rendering), but I'm <i>somewhat</i> sure that the synchronous
+     * nature of this method and the single-threadedness of <code>Main</code> prevents that.  Still,
+     * there's probably a better way to approach this.</p>
+     *
+     * @param event
+     */
+    void keyPressedEvent(KeyEvent event) {
+        if (!gallery.isEmpty()) {
+            if (event.getCode().equals(KeyCode.RIGHT) || event.getCode().equals(KeyCode.DOWN)) {
+                renderNext();
+            } else if (event.getCode().equals(KeyCode.LEFT) || event.getCode().equals(KeyCode.UP)) {
+                renderPrevious();
+            }
+        }
+    }
+
+    /**
+     * Registers event handlers for the menu bar actions.
+     */
+    private void initializeMenuBar() {
         fileOpen.setOnAction(actionEvent -> {
             final FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().addAll(
@@ -87,8 +133,63 @@ public class Controller implements Initializable {
             ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().add(new Image(getClass().getResource("/icon.png").toString()));
             dialog.showAndWait();
         });
+    }
 
-        // Drag-n-drop events
+    /**
+     * Initializes the controls and status label on the status bar.
+     */
+    private void initializeStatusBar() {
+        // Status label
+        if (args == null || args.length < 1) {
+            status.setText("No file selected");
+        }
+
+        // Forward/back buttons
+        final Image beginningButtonImage = new Image(getClass().getResourceAsStream("/beginningbutton.png"));
+        beginningButton.setGraphic(new ImageView(beginningButtonImage));
+        beginningButton.setOnAction(event -> {
+            renderFirst();
+            content.requestFocus();
+        });
+
+        final Image backButtonImage = new Image(getClass().getResourceAsStream("/backbutton.png"));
+        backButton.setGraphic(new ImageView(backButtonImage));
+        backButton.setOnAction(event -> {
+            renderPrevious();
+            content.requestFocus();
+        });
+
+        final Image forwardButtonImage = new Image(getClass().getResourceAsStream("/forwardbutton.png"));
+        forwardButton.setGraphic(new ImageView(forwardButtonImage));
+        forwardButton.setOnAction(event -> {
+            renderNext();
+            content.requestFocus();
+        });
+
+        final Image endButtonImage = new Image(getClass().getResourceAsStream("/endbutton.png"));
+        endButton.setGraphic(new ImageView(endButtonImage));
+        endButton.setOnAction(event -> {
+            renderLast();
+            content.requestFocus();
+        });
+
+        // Content scaling slider
+        sizeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            // TODO: If content is SMALLER than window, then set slider MIN value to reflect actual content size
+            // TODO: If content is SMALLER than window, then set slider MAX value to reflect double the window size
+            // TODO: If content is LARGER than window, then set slider MIN value to reflect window size
+            // TODO: If content is LARGER than window, then set slider MAX value to reflect double the content size
+            // TODO: Scale the content as the slider changes
+            System.out.println("sizeSlider changed from " + oldValue.intValue() + " to " + newValue.intValue());
+        });
+        sizeSlider.setOnMouseReleased(event -> content.requestFocus());
+        sizeSlider.setOnKeyReleased(event -> content.requestFocus());
+    }
+
+    /**
+     * Registers event handlers for loading files by drag-n-dropping them onto the window's main content area.
+     */
+    private void initializeDragAndDrop() {
         content.addEventHandler(DragEvent.DRAG_OVER, event -> {
             if (event.getDragboard().hasFiles() && GalleryItem.create(event.getDragboard().getFiles().get(0)) != null) {
                 event.acceptTransferModes(TransferMode.LINK);
@@ -101,35 +202,6 @@ public class Controller implements Initializable {
                 loadFile(event.getDragboard().getFiles().get(0));
             }
         });
-
-        // Load the initially-selected file, if there was one
-        if (args == null || args.length < 1) {
-            status.setText("No file selected");
-        } else {
-            loadFile(new File(args[0]));
-        }
-    }
-
-    /**
-     * <p>Processes key events, to scroll through the gallery items when arrow keys are pressed.</p>
-     *
-     * <p>It doesn't seem possible to register key event handlers for the main window from this controller
-     * class.  So <code>Main</code> has to register the handler, and pass events here via this method.
-     * There could potentially be thread safety issues (i.e. new scrolling operations coming in before
-     * the previous operation finishes rendering), but I'm <i>somewhat</i> sure that the synchronous
-     * nature of this method and the single-threadedness of <code>Main</code> prevents that.  Still,
-     * there's probably a better way to approach this.</p>
-     *
-     * @param event
-     */
-    void keyPressedEvent(KeyEvent event) {
-        if (gallery != null && gallery.size() > 0) {
-            if (event.getCode().equals(KeyCode.RIGHT) || event.getCode().equals(KeyCode.DOWN)) {
-                renderNext();
-            } else if (event.getCode().equals(KeyCode.LEFT) || event.getCode().equals(KeyCode.UP)) {
-                renderPrevious();
-            }
-        }
     }
 
     /**
@@ -150,11 +222,7 @@ public class Controller implements Initializable {
         final GalleryItem item = GalleryItem.create(file);
         if (item == null) return;
 
-        if (gallery == null) {
-            gallery = new Gallery(item);
-        } else {
-            gallery.add(item);
-        }
+        gallery.add(item);
         gallery.addAll(findSiblingItems(item));
         render(item, 1);
     }
@@ -198,6 +266,25 @@ public class Controller implements Initializable {
     private void renderPrevious() {
         if (gallery == null) return;
         final GalleryItem item = gallery.previous();
+        final int position = gallery.getCursor() + 1;
+        render(item, position);
+    }
+
+    /**
+     * Renders the item at the beginning of the gallery list.
+     */
+    private void renderFirst() {
+        if (gallery == null) return;
+        final GalleryItem item = gallery.first();
+        render(item, 1);
+    }
+
+    /**
+     * Renders the item at the end of the gallery list.
+     */
+    private void renderLast() {
+        if (gallery == null) return;
+        final GalleryItem item = gallery.last();
         final int position = gallery.getCursor() + 1;
         render(item, position);
     }

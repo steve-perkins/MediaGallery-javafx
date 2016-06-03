@@ -10,35 +10,8 @@ import java.util.List;
  */
 public class Gallery {
 
-    private final List<GalleryItem> items;
-    private int cursor;
-
-    /**
-     * Constructs a <code>Gallery</code> from a single media item.  If the item is <code>null</code>, then
-     * the gallery will be empty and will need further populating via {@link Gallery#add(GalleryItem)} or
-     * {@link Gallery#addAll(Collection)}.
-     *
-     * @param item
-     */
-    public Gallery(final GalleryItem item) {
-        this.items = new ArrayList<>();
-        if (item != null) this.items.add(item);
-        this.cursor = 0;
-    }
-
-    /**
-     * Constructs a <code>Gallery</code> from multiple media items.  Items that are <code>null</code> will
-     * be stripped out.
-     *
-     * @param items
-     */
-    public Gallery(final Collection<GalleryItem> items) {
-        this.items = new ArrayList<>();
-        for (final GalleryItem item : items) {
-            if (item != null) this.items.add(item);
-        }
-        this.cursor = 0;
-    }
+    private final List<GalleryItem> items = new ArrayList<>();
+    private int cursor = -1;
 
     /**
      * Appends a new media item to the gallery, if the item is non-null and isn't already included.
@@ -68,7 +41,7 @@ public class Gallery {
      */
     public void clear() {
         items.clear();
-        cursor = 0;
+        cursor = -1;
     }
 
     /**
@@ -96,12 +69,44 @@ public class Gallery {
     }
 
     /**
+     * Moves the cursor state to the first item in the gallery, and returns that item (or <code>null</code> if
+     * the gallery is empty).
+     *
+     * @return
+     */
+    public GalleryItem first() {
+        if (items.isEmpty()) return null;
+        cursor = 0;
+        return items.get(cursor);
+    }
+
+    /**
+     * Moves the cursor state to the last item in the gallery, and returns that item (or <code>null</code> if
+     * the gallery is empty).
+     *
+     * @return
+     */
+    public GalleryItem last() {
+        if (items.isEmpty()) return null;
+        cursor = items.size() - 1;
+        return items.get(cursor);
+    }
+
+    /**
      * The current cursor position for the gallery.  Zero-indexed.
      *
      * @return
      */
     public int getCursor() {
         return cursor;
+    }
+
+    /**
+     * Whether or not the gallery is empty.
+     * @return
+     */
+    public boolean isEmpty() {
+        return items.isEmpty();
     }
 
     /**
