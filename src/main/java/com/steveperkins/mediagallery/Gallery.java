@@ -1,5 +1,6 @@
 package com.steveperkins.mediagallery;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -118,4 +119,7 @@ public class Gallery {
         return items.size();
     }
 
+    public File directory() {
+        return items.isEmpty() ? null : items.get(0).getItem().getParentFile();
+    }
 }

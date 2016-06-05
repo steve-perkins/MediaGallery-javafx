@@ -119,6 +119,7 @@ public class Controller implements Initializable {
     private void initializeMenuBar() {
         fileOpen.setOnAction(actionEvent -> {
             final FileChooser fileChooser = new FileChooser();
+            fileChooser.setInitialDirectory(gallery.directory());
             fileChooser.getExtensionFilters().addAll(
                     new FileChooser.ExtensionFilter("All supported files",
                             GalleryItem.allExtensions.stream().map(ext -> "*" + ext).collect(Collectors.toList())),
