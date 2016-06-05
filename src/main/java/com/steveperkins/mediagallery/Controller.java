@@ -4,7 +4,6 @@ import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -21,6 +20,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -82,6 +82,8 @@ public class Controller implements Initializable {
         initializeMenuBar();
         initializeStatusBar();
         initializeDragAndDrop();
+
+        // TODO: Add event handler on "content", to re-render image on window resize when "fitsize == false"?
 
         // Load the initially-selected file, if there was one
         if (args != null && args.length > 0) {
@@ -181,10 +183,15 @@ public class Controller implements Initializable {
                 sizeButton.setGraphic(fitSizeImageView);
                 fitsize = true;
             }
-            // TODO: reset slider
+            sizeSlider.setValue(0);
             content.requestFocus();
         });
         sizeSliderListener = (observable, oldValue, newValue) -> {
+            if (fitsize) {
+                fitsize = false;
+                final ImageView actualSizeImageView = new ImageView(new Image(getClass().getResourceAsStream("/actualsizebutton.png")));
+                sizeButton.setGraphic(actualSizeImageView);
+            }
             double ratio = 1 + (sizeSlider.getValue() / 100);
             ratio = ratio == 0 ? 0.01 : ratio;
             resizeImage(ratio);
@@ -325,7 +332,7 @@ public class Controller implements Initializable {
     }
 
     /**
-     * TODO
+     * TODO: Document
      *
      * @param item
      * @param position
@@ -347,7 +354,7 @@ public class Controller implements Initializable {
     }
 
     /**
-     * TODO
+     * TODO: Document
      *
      * @param item
      * @param position
@@ -367,7 +374,7 @@ public class Controller implements Initializable {
     }
 
     /**
-     * TODO
+     * TODO: Document
      *
      * @param ratio
      */
@@ -384,30 +391,11 @@ public class Controller implements Initializable {
         // Calculate position and size
         final double imageWidth = imageView.getImage().getWidth() * ratio;
         final double imageHeight = imageView.getImage().getHeight() * ratio;
-        final double contentWidth = content.getWidth();
-        System.out.println(imageWidth + ", " + contentWidth + ", " + ratio);
-//        if (imageWidth < contentWidth) {
-//            imageView.setFitWidth(imageWidth);
-//        } else {
-//            final double contentImageRatio = contentWidth / imageWidth;
-//            double x = (contentWidth - imageWidth) * contentImageRatio * -1;
-//            imageView.setViewport(new Rectangle2D(x, content.getLayoutY(), content.getWidth() / ratio, content.getHeight() / ratio));
-//        }
-
-
-        final double imageToContentRatio = imageWidth / contentWidth;
-//        System.out.println(imageToContentRatio);
-        if (imageToContentRatio < 1) {
-            imageView.setViewport(new Rectangle2D(0, 0, imageWidth, imageHeight));
-        } else {
-            imageView.setViewport(new Rectangle2D(0, 0, imageWidth, imageHeight));
-        }
-
-
-
-
+        imageView.setFitWidth(imageWidth);
+        imageView.setFitHeight(imageHeight);
 
         // Re-add the updated ImageView
+        content.setClip(new Rectangle(content.getWidth(), content.getHeight()));
         content.getChildren().add(imageView);
         fitsize = false;
     }
