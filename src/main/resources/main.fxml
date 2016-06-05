@@ -8,6 +8,8 @@
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.Slider?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -42,7 +44,7 @@
             <rowConstraints>
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
             </rowConstraints>
-            <Label fx:id="status" style="-fx-padding: 0 0 0 5;" text="Label">
+            <Label fx:id="status" style="-fx-padding: 0 0 0 5;" text="No file selected">
                 <opaqueInsets>
                     <Insets />
                 </opaqueInsets>
@@ -53,21 +55,70 @@
                   <HBox.margin>
                      <Insets right="5.0" />
                   </HBox.margin>
+                  <graphic>
+                     <ImageView pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@beginningbutton.png" />
+                        </image>
+                     </ImageView>
+                  </graphic>
                </Button>
                <Button fx:id="backButton" graphicTextGap="0.0" mnemonicParsing="false">
                   <HBox.margin>
                      <Insets right="5.0" />
                   </HBox.margin>
+                  <graphic>
+                     <ImageView pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@backbutton.png" />
+                        </image>
+                     </ImageView>
+                  </graphic>
                </Button>
                <Button fx:id="forwardButton" graphicTextGap="0.0" mnemonicParsing="false">
                   <HBox.margin>
                      <Insets right="5.0" />
                   </HBox.margin>
+                  <graphic>
+                     <ImageView pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@forwardbutton.png" />
+                        </image>
+                     </ImageView>
+                  </graphic>
                </Button>
-               <Button fx:id="endButton" graphicTextGap="0.0" mnemonicParsing="false" />
-               <Slider fx:id="sizeSlider" minWidth="-Infinity" prefHeight="32.0" prefWidth="104.0">
+               <Button fx:id="endButton" graphicTextGap="0.0" mnemonicParsing="false">
                   <HBox.margin>
-                     <Insets left="20.0" right="10.0" />
+                     <Insets right="20.0" />
+                  </HBox.margin>
+                  <opaqueInsets>
+                     <Insets />
+                  </opaqueInsets>
+                  <graphic>
+                     <ImageView pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@endbutton.png" />
+                        </image>
+                     </ImageView>
+                  </graphic></Button>
+               <Button fx:id="sizeButton" ellipsisString="" graphicTextGap="0.0" mnemonicParsing="false" text="Button">
+                  <graphic>
+                     <ImageView pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@actualsizebutton.png" />
+                        </image>
+                     </ImageView>
+                  </graphic>
+                  <opaqueInsets>
+                     <Insets left="5.0" />
+                  </opaqueInsets>
+                  <HBox.margin>
+                     <Insets right="5.0" />
+                  </HBox.margin>
+               </Button>
+               <Slider fx:id="sizeSlider" min="-100.0" max="100.0" minWidth="-Infinity" prefHeight="32.0" prefWidth="104.0">
+                  <HBox.margin>
+                     <Insets right="10.0" />
                   </HBox.margin>
                </Slider>
             </children>

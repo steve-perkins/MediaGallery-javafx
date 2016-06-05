@@ -1,8 +1,10 @@
 package com.steveperkins.mediagallery;
 
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -59,11 +61,15 @@ public class Controller implements Initializable {
     @FXML
     private Button endButton;
     @FXML
+    private Button sizeButton;
+    @FXML
     private Slider sizeSlider;
 
     private String[] args;
     private Stage stage;
     private Gallery gallery = new Gallery();
+    private boolean fitsize = true;
+    private ChangeListener<? super Number> sizeSliderListener;
 
     /**
      * Called automatically by JavaFX when creating the UI.
@@ -139,49 +145,50 @@ public class Controller implements Initializable {
      * Initializes the controls and status label on the status bar.
      */
     private void initializeStatusBar() {
-        // Status label
-        if (args == null || args.length < 1) {
-            status.setText("No file selected");
-        }
-
-        // Forward/back buttons
-        final Image beginningButtonImage = new Image(getClass().getResourceAsStream("/beginningbutton.png"));
-        beginningButton.setGraphic(new ImageView(beginningButtonImage));
         beginningButton.setOnAction(event -> {
             renderFirst();
             content.requestFocus();
         });
-
-        final Image backButtonImage = new Image(getClass().getResourceAsStream("/backbutton.png"));
-        backButton.setGraphic(new ImageView(backButtonImage));
         backButton.setOnAction(event -> {
             renderPrevious();
             content.requestFocus();
         });
-
-        final Image forwardButtonImage = new Image(getClass().getResourceAsStream("/forwardbutton.png"));
-        forwardButton.setGraphic(new ImageView(forwardButtonImage));
         forwardButton.setOnAction(event -> {
             renderNext();
             content.requestFocus();
         });
-
-        final Image endButtonImage = new Image(getClass().getResourceAsStream("/endbutton.png"));
-        endButton.setGraphic(new ImageView(endButtonImage));
         endButton.setOnAction(event -> {
             renderLast();
             content.requestFocus();
         });
-
-        // Content scaling slider
-        sizeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            // TODO: If content is SMALLER than window, then set slider MIN value to reflect actual content size
-            // TODO: If content is SMALLER than window, then set slider MAX value to reflect double the window size
-            // TODO: If content is LARGER than window, then set slider MIN value to reflect window size
-            // TODO: If content is LARGER than window, then set slider MAX value to reflect double the content size
-            // TODO: Scale the content as the slider changes
-            System.out.println("sizeSlider changed from " + oldValue.intValue() + " to " + newValue.intValue());
+        sizeButton.setOnAction(event -> {
+            if (content.getChildren().size() < 1 || !(content.getChildren().get(0) instanceof ImageView)) return;
+            if (fitsize) {
+                // Switch to actual size
+                resizeImage(1.0);
+                final ImageView actualSizeImageView = new ImageView(new Image(getClass().getResourceAsStream("/actualsizebutton.png")));
+                sizeButton.setGraphic(actualSizeImageView);
+                fitsize = false;
+            } else {
+                // Switch to window fit size
+                final ImageView imageView = (ImageView) content.getChildren().get(0);
+                imageView.fitWidthProperty().unbind();
+                imageView.fitHeightProperty().unbind();
+                imageView.fitWidthProperty().bind(content.widthProperty());
+                imageView.fitHeightProperty().bind(content.heightProperty());
+                imageView.setViewport(null);
+                final ImageView fitSizeImageView = new ImageView(new Image(getClass().getResourceAsStream("/fitsizebutton.png")));
+                sizeButton.setGraphic(fitSizeImageView);
+                fitsize = true;
+            }
+            // TODO: reset slider
+            content.requestFocus();
         });
+        sizeSliderListener = (observable, oldValue, newValue) -> {
+            double ratio = 1 + (sizeSlider.getValue() / 100);
+            ratio = ratio == 0 ? 0.01 : ratio;
+            resizeImage(ratio);
+        };
         sizeSlider.setOnMouseReleased(event -> content.requestFocus());
         sizeSlider.setOnKeyReleased(event -> content.requestFocus());
     }
@@ -298,37 +305,111 @@ public class Controller implements Initializable {
     private void render(final GalleryItem item, final int position) {
         if (item == null) return;
         stage.setTitle("MediaGallery - " + item.getItem().getName());
-        // If the currently rendered item is a video, stop its player before proceeding
-        if (content.getChildren().size() > 0 && content.getChildren().get(0) instanceof MediaControl) {
+
+        if (content.getChildren().size() > 0 && content.getChildren().get(0) instanceof ImageView) {
+            // Stop the status bar slider from resizing any previous image (this will be a no-op if there is no
+            // existing listener)
+            sizeSlider.valueProperty().removeListener(sizeSliderListener);
+
+        } else if (content.getChildren().size() > 0 && content.getChildren().get(0) instanceof MediaControl) {
+            // If the currently rendered item is a video, stop its player before proceeding
             final MediaControl previousMediaControl = (MediaControl) content.getChildren().get(0);
             previousMediaControl.getMediaPlayer().dispose();
         }
+
         if (item.isImage()) {
-            try {
-                final String imageURL = item.getItem().toURI().toURL().toExternalForm();
-                final ImageView imageView = new ImageView(new Image(imageURL));
-                imageView.setPreserveRatio(true);
-                imageView.fitWidthProperty().bind(content.widthProperty());
-                imageView.fitHeightProperty().bind(content.heightProperty());
-                content.getChildren().clear();
-                content.getChildren().add(imageView);
-                status.setText(position + " of " + gallery.size());
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
+            renderImage(item.getItem(), position);
         } else if (item.isVideo()) {
-            try {
-                final String videoURL = item.getItem().toURI().toURL().toExternalForm();
-                final MediaPlayer mediaPlayer = new MediaPlayer(new Media(videoURL));
-                mediaPlayer.setAutoPlay(optionsAutoplay.isSelected());
-                final MediaControl mediaControl = new MediaControl(mediaPlayer, optionsLoop.isSelected());
-                content.getChildren().clear();
-                content.getChildren().add(mediaControl);
-                status.setText(position + " of " + gallery.size());
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
+            renderVideo(item.getItem(), position);
         }
+    }
+
+    /**
+     * TODO
+     *
+     * @param item
+     * @param position
+     */
+    private void renderImage(final File item, final int position) {
+        try {
+            final String imageURL = item.toURI().toURL().toExternalForm();
+            final ImageView imageView = new ImageView(new Image(imageURL));
+            imageView.setPreserveRatio(true);
+            imageView.fitWidthProperty().bind(content.widthProperty());
+            imageView.fitHeightProperty().bind(content.heightProperty());
+            content.getChildren().clear();
+            content.getChildren().add(imageView);
+            sizeSlider.valueProperty().addListener(sizeSliderListener);
+            status.setText(position + " of " + gallery.size());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * TODO
+     *
+     * @param item
+     * @param position
+     */
+    private void renderVideo(final File item, final int position) {
+        try {
+            final String videoURL = item.toURI().toURL().toExternalForm();
+            final MediaPlayer mediaPlayer = new MediaPlayer(new Media(videoURL));
+            mediaPlayer.setAutoPlay(optionsAutoplay.isSelected());
+            final MediaControl mediaControl = new MediaControl(mediaPlayer, optionsLoop.isSelected());
+            content.getChildren().clear();
+            content.getChildren().add(mediaControl);
+            status.setText(position + " of " + gallery.size());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * TODO
+     *
+     * @param ratio
+     */
+    private void resizeImage(final double ratio) {
+        if (content.getChildren().size() < 1 || !(content.getChildren().get(0) instanceof ImageView)) return;
+
+        // Clear the current ImageView
+        final ImageView imageView = (ImageView) content.getChildren().get(0);
+        imageView.fitWidthProperty().unbind();
+        imageView.fitHeightProperty().unbind();
+        imageView.setViewport(null);
+        content.getChildren().clear();
+
+        // Calculate position and size
+        final double imageWidth = imageView.getImage().getWidth() * ratio;
+        final double imageHeight = imageView.getImage().getHeight() * ratio;
+        final double contentWidth = content.getWidth();
+        System.out.println(imageWidth + ", " + contentWidth + ", " + ratio);
+//        if (imageWidth < contentWidth) {
+//            imageView.setFitWidth(imageWidth);
+//        } else {
+//            final double contentImageRatio = contentWidth / imageWidth;
+//            double x = (contentWidth - imageWidth) * contentImageRatio * -1;
+//            imageView.setViewport(new Rectangle2D(x, content.getLayoutY(), content.getWidth() / ratio, content.getHeight() / ratio));
+//        }
+
+
+        final double imageToContentRatio = imageWidth / contentWidth;
+//        System.out.println(imageToContentRatio);
+        if (imageToContentRatio < 1) {
+            imageView.setViewport(new Rectangle2D(0, 0, imageWidth, imageHeight));
+        } else {
+            imageView.setViewport(new Rectangle2D(0, 0, imageWidth, imageHeight));
+        }
+
+
+
+
+
+        // Re-add the updated ImageView
+        content.getChildren().add(imageView);
+        fitsize = false;
     }
 
     /**
