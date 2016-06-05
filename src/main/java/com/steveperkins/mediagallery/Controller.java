@@ -1,16 +1,12 @@
 package com.steveperkins.mediagallery;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckMenuItem;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.Slider;
+import javafx.scene.Node;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.DragEvent;
@@ -20,7 +16,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -165,34 +160,47 @@ public class Controller implements Initializable {
             content.requestFocus();
         });
         sizeButton.setOnAction(event -> {
-            if (content.getChildren().size() < 1 || !(content.getChildren().get(0) instanceof ImageView)) return;
+            // Validate that the main content area contains an ImageView, either directly or within scrollbars
+            if (content.getChildren().size() < 1) return;
+            final Node contentNode = content.getChildren().get(0);
+            if (!(contentNode instanceof ImageView || contentNode instanceof ScrollPane)) return;
+
             if (fitsize) {
                 // Switch to actual size
-                resizeImage(1.0);
-                final ImageView actualSizeImageView = new ImageView(new Image(getClass().getResourceAsStream("/actualsizebutton.png")));
-                sizeButton.setGraphic(actualSizeImageView);
+                final ImageView sizeButtonImageView = new ImageView(new Image(getClass().getResourceAsStream("/fitsizebutton.png")));
+                sizeButton.setGraphic(sizeButtonImageView);
                 fitsize = false;
+                resizeImage(1.0);
             } else {
                 // Switch to window fit size
-                final ImageView imageView = (ImageView) content.getChildren().get(0);
+                final ImageView sizeButtonImageView = new ImageView(new Image(getClass().getResourceAsStream("/actualsizebutton.png")));
+                sizeButton.setGraphic(sizeButtonImageView);
+                fitsize = true;
+
+                ImageView imageView;
+                if (contentNode instanceof ImageView) {
+                    imageView = (ImageView) contentNode;
+                } else {
+                    final ScrollPane scrollPane = (ScrollPane) contentNode;
+                    final StackPane stackPane = (StackPane) scrollPane.getContent();
+                    imageView = (ImageView) stackPane.getChildren().get(0);
+                }
+                content.getChildren().clear();
                 imageView.fitWidthProperty().unbind();
                 imageView.fitHeightProperty().unbind();
                 imageView.fitWidthProperty().bind(content.widthProperty());
                 imageView.fitHeightProperty().bind(content.heightProperty());
                 imageView.setViewport(null);
-                final ImageView fitSizeImageView = new ImageView(new Image(getClass().getResourceAsStream("/fitsizebutton.png")));
-                sizeButton.setGraphic(fitSizeImageView);
-                fitsize = true;
+                content.getChildren().add(imageView);
             }
             sizeSlider.setValue(0);
             content.requestFocus();
         });
         sizeSliderListener = (observable, oldValue, newValue) -> {
-            if (fitsize) {
-                fitsize = false;
-                final ImageView actualSizeImageView = new ImageView(new Image(getClass().getResourceAsStream("/actualsizebutton.png")));
-                sizeButton.setGraphic(actualSizeImageView);
-            }
+            fitsize = false;
+            final ImageView actualSizeImageView = new ImageView(new Image(getClass().getResourceAsStream("/fitsizebutton.png")));
+            sizeButton.setGraphic(actualSizeImageView);
+
             double ratio = 1 + (sizeSlider.getValue() / 100);
             ratio = ratio == 0 ? 0.01 : ratio;
             resizeImage(ratio);
@@ -380,10 +388,20 @@ public class Controller implements Initializable {
      * @param ratio
      */
     private void resizeImage(final double ratio) {
-        if (content.getChildren().size() < 1 || !(content.getChildren().get(0) instanceof ImageView)) return;
+        // Validate that the main content area contains an ImageView, either directly or nested within scrollbars
+        if (content.getChildren().size() < 1) return;
+        final Node contentNode = content.getChildren().get(0);
+        if (!(contentNode instanceof ImageView) && !(contentNode instanceof ScrollPane)) return;
 
-        // Clear the current ImageView
-        final ImageView imageView = (ImageView) content.getChildren().get(0);
+        // Clear the current main content area and ImageView settings
+        ImageView imageView;
+        if (contentNode instanceof ImageView) {
+            imageView = (ImageView) contentNode;
+        } else {
+            final ScrollPane scrollPane = (ScrollPane) contentNode;
+            final StackPane stackPane = (StackPane) scrollPane.getContent();
+            imageView = (ImageView) stackPane.getChildren().get(0);
+        }
         imageView.fitWidthProperty().unbind();
         imageView.fitHeightProperty().unbind();
         imageView.setViewport(null);
@@ -395,9 +413,17 @@ public class Controller implements Initializable {
         imageView.setFitWidth(imageWidth);
         imageView.setFitHeight(imageHeight);
 
-        // Re-add the updated ImageView
-        content.setClip(new Rectangle(content.getWidth(), content.getHeight()));
-        content.getChildren().add(imageView);
+        // Resize the image
+        if (imageWidth > content.getWidth() || imageHeight > content.getHeight()) {
+            // If the image is bigger than the main content area, add scroll bars
+            final StackPane stackPane = new StackPane(imageView);
+            final ScrollPane scrollPane = new ScrollPane(stackPane);
+            stackPane.minWidthProperty().bind(Bindings.createDoubleBinding( () -> scrollPane.getViewportBounds().getWidth(), scrollPane.viewportBoundsProperty()));
+            content.getChildren().add(scrollPane);
+        } else {
+            // If the image fits within the main content area, re-add it as-is
+            content.getChildren().add(imageView);
+        }
         fitsize = false;
     }
 
