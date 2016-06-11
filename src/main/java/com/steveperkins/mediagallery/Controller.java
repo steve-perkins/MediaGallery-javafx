@@ -78,7 +78,7 @@ public class Controller implements Initializable {
         initializeStatusBar();
         initializeDragAndDrop();
 
-        // TODO: Add event handler on "content", to re-render image on window resize when "fitsize == false"?
+        // TODO: Add event handlers (or a bidirectional property?) to synchronize the slider position when the image changes size through other means
 
         // Load the initially-selected file, if there was one
         if (args != null && args.length > 0) {
@@ -143,6 +143,7 @@ public class Controller implements Initializable {
      * Initializes the controls and status label on the status bar.
      */
     private void initializeStatusBar() {
+        status.textProperty().bind(gallery.statusProperty());
         beginningButton.setOnAction(event -> {
             renderFirst();
             content.requestFocus();
@@ -247,7 +248,7 @@ public class Controller implements Initializable {
 
         gallery.add(item);
         gallery.addAll(findSiblingItems(item));
-        render(item, 1);
+        render(item);
     }
 
     /**
@@ -278,9 +279,7 @@ public class Controller implements Initializable {
      */
     private void renderNext() {
         if (gallery == null) return;
-        final GalleryItem item = gallery.next();
-        final int position = gallery.getCursor() + 1;
-        render(item, position);
+        render(gallery.next());
     }
 
     /**
@@ -288,9 +287,7 @@ public class Controller implements Initializable {
      */
     private void renderPrevious() {
         if (gallery == null) return;
-        final GalleryItem item = gallery.previous();
-        final int position = gallery.getCursor() + 1;
-        render(item, position);
+        render(gallery.previous());
     }
 
     /**
@@ -298,8 +295,7 @@ public class Controller implements Initializable {
      */
     private void renderFirst() {
         if (gallery == null) return;
-        final GalleryItem item = gallery.first();
-        render(item, 1);
+        render(gallery.first());
     }
 
     /**
@@ -307,18 +303,15 @@ public class Controller implements Initializable {
      */
     private void renderLast() {
         if (gallery == null) return;
-        final GalleryItem item = gallery.last();
-        final int position = gallery.getCursor() + 1;
-        render(item, position);
+        render(gallery.last());
     }
 
     /**
      * Functionality common to {@link Controller#renderNext()} and {@link Controller#renderPrevious()}.
      *
      * @param item
-     * @param position
      */
-    private void render(final GalleryItem item, final int position) {
+    private void render(final GalleryItem item) {
         if (item == null) return;
         stage.setTitle("MediaGallery - " + item.getItem().getName());
 
@@ -334,19 +327,18 @@ public class Controller implements Initializable {
         }
 
         if (item.isImage()) {
-            renderImage(item.getItem(), position);
+            renderImage(item.getItem());
         } else if (item.isVideo()) {
-            renderVideo(item.getItem(), position);
+            renderVideo(item.getItem());
         }
     }
 
     /**
-     * TODO: Document
+     * Renders a given gallery item as an image.
      *
      * @param item
-     * @param position
      */
-    private void renderImage(final File item, final int position) {
+    private void renderImage(final File item) {
         try {
             final String imageURL = item.toURI().toURL().toExternalForm();
             final ImageView imageView = new ImageView(new Image(imageURL));
@@ -356,19 +348,17 @@ public class Controller implements Initializable {
             content.getChildren().clear();
             content.getChildren().add(imageView);
             sizeSlider.valueProperty().addListener(sizeSliderListener);
-            status.setText(position + " of " + gallery.size());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * TODO: Document
+     * Renders a given gallery item as a video.
      *
      * @param item
-     * @param position
      */
-    private void renderVideo(final File item, final int position) {
+    private void renderVideo(final File item) {
         try {
             final String videoURL = item.toURI().toURL().toExternalForm();
             final MediaPlayer mediaPlayer = new MediaPlayer(new Media(videoURL));
@@ -376,14 +366,19 @@ public class Controller implements Initializable {
             final MediaControl mediaControl = new MediaControl(mediaPlayer, optionsLoop.isSelected());
             content.getChildren().clear();
             content.getChildren().add(mediaControl);
-            status.setText(position + " of " + gallery.size());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * TODO: Document
+     * <p>Called by event handlers (i.e. the "Actual Size" button and the size slider on the status bar) to shrink
+     * or grow the size of the displayed image.</p>
+     *
+     * <p>By default, images automatically shrink or grow to fit the content area.  Once a resize operation has been
+     * explicitly called, this switches from automatic to manual (until the "Fit to Window Size" button toggles it
+     * back).  This method resizes the image by effectively removing the previous <code>ImageView</code> altogether,
+     * and replacing it with a new instance having the appropriate dimensions.</p>
      *
      * @param ratio
      */
@@ -407,7 +402,7 @@ public class Controller implements Initializable {
         imageView.setViewport(null);
         content.getChildren().clear();
 
-        // Calculate position and size
+        // Calculate size
         final double imageWidth = imageView.getImage().getWidth() * ratio;
         final double imageHeight = imageView.getImage().getHeight() * ratio;
         imageView.setFitWidth(imageWidth);

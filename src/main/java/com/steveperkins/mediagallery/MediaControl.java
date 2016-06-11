@@ -56,7 +56,12 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 /**
- * TODO: Document
+ * <p>A wrapper around the standard JavaFX {@link MediaView} component, with the addition of player controls, a time
+ * label, and full screen mode button.</p>
+ *
+ * <p>This class is based upon the "Advanced Media" demo in "Ensemble8.jar", from the "Java SE Development Kit Demos
+ * and Samples Downloads" on the main Oracle JDK downloads page.  The code has been somewhat refactored and
+ * cleaned up.</p>
  */
 public class MediaControl extends BorderPane {
 
@@ -75,7 +80,8 @@ public class MediaControl extends BorderPane {
     private boolean fullScreen = false;
 
     /**
-     * TODO: Document
+     * Constructs a <code>MediaControl</code> instance from a {@link MediaPlayer} object, with auto-repeat looping
+     * disabled.
      *
      * @param mediaPlayer
      */
@@ -84,7 +90,8 @@ public class MediaControl extends BorderPane {
     }
 
     /**
-     * TODO: Document
+     * Constructs a <code>MediaControl</code> instance from a {@link MediaPlayer} object, with a specified setting as
+     * to whether or not the video will loop repeatedly.
      *
      * @param mediaPlayer
      * @param repeat
@@ -259,7 +266,8 @@ public class MediaControl extends BorderPane {
     }
 
     /**
-     * TODO: Document
+     * Exposes the {@link MediaPlayer} instance wrapped by this object.  {@link Controller} uses this to properly
+     * dispose of the player when switching to the next gallery item.
      *
      * @return
      */
@@ -311,7 +319,7 @@ public class MediaControl extends BorderPane {
     }
 
     /**
-     * TODO: Document
+     * Switches the video to full-screen display.
      */
     private void onFullScreen() {
         if (!newStage.isFullScreen()) {
@@ -329,7 +337,7 @@ public class MediaControl extends BorderPane {
     }
 
     /**
-     * TODO: Document
+     * Updates the current time display as the video plays (or as it is rewound or fast-forwarded by the slider).
      */
     private void updateValues() {
         if (playTime != null && timeSlider != null && volumeSlider != null && duration != null) {
@@ -348,7 +356,8 @@ public class MediaControl extends BorderPane {
     }
 
     /**
-     * TODO: Document
+     * Constructs a label for the controls area, showing the time elapsed in the video along with the total video
+     * length.
      *
      * @param elapsed
      * @param duration

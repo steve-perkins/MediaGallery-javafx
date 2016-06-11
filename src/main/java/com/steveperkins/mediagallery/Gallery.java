@@ -1,5 +1,8 @@
 package com.steveperkins.mediagallery;
 
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,6 +16,7 @@ public class Gallery {
 
     private final List<GalleryItem> items = new ArrayList<>();
     private int cursor = -1;
+    private final ReadOnlyStringWrapper statusProperty = new ReadOnlyStringWrapper("No file selected");
 
     /**
      * Appends a new media item to the gallery, if the item is non-null and isn't already included.
@@ -25,6 +29,7 @@ public class Gallery {
             if (items.size() == 1) {
                 cursor = 0;
             }
+            statusProperty.set((cursor + 1) + " of " + items.size());
         }
     }
 
@@ -43,6 +48,7 @@ public class Gallery {
     public void clear() {
         items.clear();
         cursor = -1;
+        statusProperty.set("No file selected");
     }
 
     /**
@@ -54,6 +60,7 @@ public class Gallery {
     public GalleryItem next() {
         if (items.isEmpty()) return null;
         cursor = cursor + 1 < items.size() ? cursor + 1 : 0;
+        statusProperty.set((cursor + 1) + " of " + items.size());
         return items.get(cursor);
     }
 
@@ -66,6 +73,7 @@ public class Gallery {
     public GalleryItem previous() {
         if (items.isEmpty()) return null;
         cursor = cursor > 0 ? cursor - 1 : items.size() - 1;
+        statusProperty.set((cursor + 1) + " of " + items.size());
         return items.get(cursor);
     }
 
@@ -78,6 +86,7 @@ public class Gallery {
     public GalleryItem first() {
         if (items.isEmpty()) return null;
         cursor = 0;
+        statusProperty.set((cursor + 1) + " of " + items.size());
         return items.get(cursor);
     }
 
@@ -90,16 +99,12 @@ public class Gallery {
     public GalleryItem last() {
         if (items.isEmpty()) return null;
         cursor = items.size() - 1;
+        statusProperty.set((cursor + 1) + " of " + items.size());
         return items.get(cursor);
     }
 
-    /**
-     * The current cursor position for the gallery.  Zero-indexed.
-     *
-     * @return
-     */
-    public int getCursor() {
-        return cursor;
+    public ReadOnlyStringProperty statusProperty() {
+        return statusProperty.getReadOnlyProperty();
     }
 
     /**
@@ -108,15 +113,6 @@ public class Gallery {
      */
     public boolean isEmpty() {
         return items.isEmpty();
-    }
-
-    /**
-     * The number of items in the gallery.
-     *
-     * @return
-     */
-    public int size() {
-        return items.size();
     }
 
     public File directory() {
