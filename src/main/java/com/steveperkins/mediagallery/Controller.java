@@ -347,6 +347,8 @@ public class Controller implements Initializable {
             imageView.fitHeightProperty().bind(content.heightProperty());
             content.getChildren().clear();
             content.getChildren().add(imageView);
+            sizeButton.setDisable(false);
+            sizeSlider.setDisable(false);
             sizeSlider.valueProperty().addListener(sizeSliderListener);
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -366,6 +368,8 @@ public class Controller implements Initializable {
             final MediaControl mediaControl = new MediaControl(mediaPlayer, optionsLoop.isSelected());
             content.getChildren().clear();
             content.getChildren().add(mediaControl);
+            sizeButton.setDisable(true);
+            sizeSlider.setDisable(true);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
