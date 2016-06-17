@@ -24,7 +24,7 @@ task javapackager(type: Exec) {
         def javapackager = 'javapackager.exe'
         def absolutePath = "${System.getenv('JAVA_HOME')}${File.separator}bin${File.separator}javapackager.exe"
         if (new File(absolutePath).exists()) javapackager = absolutePath
-        command = ['cmd', '/c', javapackager, '-deploy', '-native', '-srcfiles', 'MediaGallery-javafx.jar', '-outdir', '.', '-outfile', 'MediaGallery', '-appclass', 'com.steveperkins.mediagallery.Main', '-name', 'MediaGallery', '-Bicon=..\\..\\src\\main\\resources\\icon.ico']
+        command = ['cmd', '/c', javapackager, '-deploy', '-native', '-srcfiles', 'MediaGallery-javafx.jar', '-outdir', '.', '-outfile', 'MediaGallery', '-appclass', 'com.steveperkins.mediagallery.Main', '-name', 'MediaGallery', '-Bicon=..\\..\\src\\main\\resources\\icon.ico', '-Bvendor=StevePerkins']
     } else {
         def javapackager = 'javapackager'
         def absolutePath = "${System.getenv('JAVA_HOME')}${File.separator}bin${File.separator}javapackager"
