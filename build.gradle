@@ -16,7 +16,7 @@ jar {
 }
 
 task javapackager(type: Exec) {
-    dependsOn jar
+    dependsOn clean, jar
     workingDir 'build/libs'
 
     def command
@@ -24,12 +24,12 @@ task javapackager(type: Exec) {
         def javapackager = 'javapackager.exe'
         def absolutePath = "${System.getenv('JAVA_HOME')}${File.separator}bin${File.separator}javapackager.exe"
         if (new File(absolutePath).exists()) javapackager = absolutePath
-        command = ['cmd', '/c', javapackager, '-deploy', '-native', '-srcfiles', 'MediaGallery-javafx.jar', '-outdir', '.', '-outfile', 'MediaGallery', '-appclass', 'com.steveperkins.mediagallery.Main', '-name', 'MediaGallery']
+        command = ['cmd', '/c', javapackager, '-deploy', '-native', '-srcfiles', 'MediaGallery-javafx.jar', '-outdir', '.', '-outfile', 'MediaGallery', '-appclass', 'com.steveperkins.mediagallery.Main', '-name', 'MediaGallery', '-Bicon=..\\..\\src\\main\\resources\\icon.ico']
     } else {
         def javapackager = 'javapackager'
         def absolutePath = "${System.getenv('JAVA_HOME')}${File.separator}bin${File.separator}javapackager"
         if (new File(absolutePath).exists()) javapackager = absolutePath
-        command = [javapackager, '-deploy', '-native', '-srcfiles', 'MediaGallery-javafx.jar', '-outdir', '.', '-outfile', 'MediaGallery', '-appclass', 'com.steveperkins.mediagallery.Main', '-name', 'MediaGallery']
+        command = [javapackager, '-deploy', '-native', '-srcfiles', 'MediaGallery-javafx.jar', '-outdir', '.', '-outfile', 'MediaGallery', '-appclass', 'com.steveperkins.mediagallery.Main', '-name', 'MediaGallery', '-Bicon=../../src/main/resources/icon.png']
     }
     println command.join(' ')
     commandLine command
